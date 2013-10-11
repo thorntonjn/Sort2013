@@ -46,18 +46,42 @@
 					</p>
 				</section>
 
+                <section>
+                    <h2>What Are We Solving ?</h2>
+                    <ul>
+                        <li>Temple List </li>
+                        <li>Ancestor Page</li>
+                        <li>Code Complexity</li>
+                    </ul>
+                    <aside class="notes">
+                        <ul>
+                            <li>Large Temple Lists bog down after 500 items </li>
+                            <li>Difficulty Sorting and Finding Ordinances</li>
+                            <li>Consistent person data among many components on ancestor page</li>
+                            <li>Simplifying Complexity For Tree</li>
+                        </ul>
+                    </aside>
+                </section>
+
 				<section>
 					<h2>Why Angular JS</h2>
 					<ul>
-                        <li>A lot of hype and documentation to help devs learn. </li>
-                        <li>Seemed simple as long as you stay away from directives.</li>
-                        <li>Supposed to have fast two-way data binding, no more one off syncing logic.</li>
-                        <li>Allows for easier or more structured Model View Presenter logic.</li>
+                        <li>Popularity and Momentum </li>
+                        <li>Documentation</li>
+                        <li>Simplicity</li>
+                        <li>Separation of Data Model & View Presenter logic</li>
+                        <li>Performance</li>
+                        <li>Testing</li>
 					</ul>
-
-					<aside class="notes">
-						Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).
-					</aside>
+                    <aside class="notes">
+                        <ul>
+                            <li>Where there's smoke there usually is fire.  Excitement, Hype and Movement. </li>
+                            <li>Sometimes you want to mix things up. Try something new. The Lord cant' guide you if you don't move your feet.</li>
+                            <li>Two-way binding, Logic to display data in Window</li>
+                            <li>Claims to support performance, seem to be serious about scalability</li>
+                            <li>Dependency Injection, Easy Mocking. No need to test view logic.</li>
+                        </ul>
+                    </aside>
 				</section>
 
 				<!-- Example of nested vertical slides -->
@@ -66,6 +90,21 @@
 						<h2>What are the Major hurdles to overcome ?</h2>
 						<h4>What did we guess incorrectly ?</h4>
 						<h4>Where did we spend our time ?</h4>
+						<aside class="notes">
+							<ul>
+								<li> Hurdle: JQuery Withdrawl! </li>
+                                <li> Hurdle: Testing Framework - No Mocha</li>
+								<li> Hurdle: Issues using pre RC1.2 angular releases.</li>
+								<li> Hurdle: Page navigation issues.  </li>
+								<li> Guessed: Angular under active development, things will change, your code will break!</li>
+								<li> Guessed: ng-grid would provide sorting and performance enhancements</li>
+                                <li> Mispredicted: needing help from community to get portions working </li>
+								<li> Pull request to fix checkbox selections when sorting the list and data not fully downloaded. </li>
+								<li> Mispredicted: Level of reaching down into the core code(resizing of window)</li>
+                                <li> Hurdle & Time: Learning the Angular Way of doing things.  </li>
+								<li> Time: Common ng-* directives</li>
+							</ul>
+						</aside>
 					</section>
 					<section>
 						<h2>Learning curve</h2>
@@ -79,10 +118,28 @@
 					<section>
 						<h2>Gradual Benefit</h2>
 						<p>Rewriting a module at a time. Allows us to progressively rewrite, but we won’t see the benefit until the majority of the app is in angular.</p>
+						<aside class="notes">
+							<ul>
+								<li>Temple app has some benefit using ng-grid while still using previous flow gadgets. </li> 
+								<li>Coordinate and mix angular logic with legacy (Temple Sub nav)   </li>
+								<li>Ancestor Page - when all one app you can share model </li>
+								<li>Single page can affect multiple views</li> 
+								<li>Lose all benefit if you are in a mixed world.</li>
+							</ul>
+						</aside>
 					</section>
 					<section>
 						<h2>Moving to a Single Page App</h2>
 						<p>Almost all logic is on the client instead of the server. (works on desktop and mobile)</p>
+						<aside class="notes">
+							<ul>
+								<li>You might spend a lot of time here, but we didn't. </li> 
+								<li>Migrating gadgets to directives and controllers.   </li>
+								<li>Linking angular to legacy components.</li>
+								<li>Wasn't as hard as we imagined.</li>
+								<li>Tree would be difficult</li>
+							</ul>
+						</aside>
 					</section>
 				</section>
 
@@ -90,19 +147,20 @@
                     <section>
                         <h2>Importance of Managing Complexity</h2>
                         <p>There are two ways of constructing a software design: one way is to make it so simple that there are obviously no deficiencies, and the other is to make it so complicated that there are no obvious deficiences. -- C. A. R. Hoare</p>
+                        <aside class="notes">
+                            <h2>The Right Amount of Complexity</h2>
+                            <ul>
+                                <li>Avoid</li>
+                                <ul>
+                                    <li>complex solution to a simple problem</li>
+                                    <li>simple, incorrect solution to a complex problem</li>
+                                    <li>Inappropriate complex solution to a complex problem</li>
+                                </ul>
+                                <p>Writing code that compensates for human limitations helps yourself and others understand and introduce fewer defects</p>
+                            </ul>
+                        </aside>
                     </section>
-                    <section>
-                        <h2>The Right Amount of Complexity</h2>
-                        <ul>
-                            <li>Avoid</li>
-                             <ul>
-                                 <li>complex solution to a simple problem</li>
-                                <li>simple, incorrect solution to a complex problem</li>
-                                <li>Inappropriate complex solution to a complex problem</li>
-                             </ul>
-                            <p>Writing code that compensates for human limitations helps yourself and others understand and introduce fewer defects</p>
-                        </ul>
-                    </section>
+
                     <section>
                         <h2>Desirable Design Characteristics </h2>
                         <h4>(Steve McConell - Code Complete, copyright 2004)</h4>
@@ -112,52 +170,64 @@
                             <li>Loose Coupling</li>
                             <li>Extensibility</li>
                             <li>Reusability</li>
-                            <li>High fan-in</li>
                             <li>Low-to-medium fan-out</li>
                             <li>Portability</li>
                             <li>Leanness</li>
-                            <li>Stratification</li>
-                        </ul></li>
+                        </ul>
+                        <aside class="notes">
+                            <ul>
+                                <li>Minimal Complexity - separate business logic</li>
+                                <li>Ease of Maintenance - testing with DI, structured, opinionated, templates provide more information about what is going on </li>
+                                <li>Loose Coupling - complete separation of data and view</li>
+                                <li>Extensibility - scope inheritance and isolation provide a lot of control </li>
+                                <li>Reusability - design for reusable components using directives</li>
+                                <li>directives allow easy reuse, globals to anywhere on page, compared to jquery plugin</li>
+                                <li>Low-to-medium fan-out - developer still needs to control this you have the ability to add lots dependencies</li>
+                                <li>Portability - can serve from any environment, client side so any enviroment can run or develop</li>
+                                <li>Leanness - Our code became smaller and simplier, the library itself is very small</li>
+                            </ul>
+
+                        </aside>
+
+                    </section>
+
+                </section>
+                <section>
+                    <section>
+                        <h2>Performance Gains With Angular</h2>
+                        <ul>
+                            <li>Focus on Efficient Data Gathering</li>
+                            <li>Built in Single Page App Routing</li>
+                            <li>Optimized View Construction</li>
+                            <li>Partial View Updates From Changes</li>
+                        </ul>
+                        <aside class="notes">
+                            <ul>
+                                <li>Little or No view binding logic</li>
+                                <li>Using angular directives to construct dom provides free common optimizations</li>
+                            </ul>
+                        </aside>
                     </section>
                     <section>
-                        <h2>Minimal Complexity - Separation of Model, Data, and View</h2>
+                        <h2>Additional Performance Consideration Within Angular</h2>
                         <ul>
-                            <li>Simplify our data model pub/sub for updates. The page will share a single model reference that will marshal the update events to all of the controls.</li>
+                            <li>minimize data bindings</li>
+                            <li>reduce $digest cyles</li>
+                            <li>minimize computation in bindings</li>
 
                         </ul>
-                    </section>
-                </section>
-
-				<section>
-                    <section>
-                        <h2>Performance</h2>
-                        <ul>
+                        <aside class="notes">
+                            <li>reduce the number of $digest cyles, throttle if necessary</li>
+                            <li>minimize computation during $digest cyles and in binding methods</li>
+                            <li>minimize data binding</li>
+                            <h>Follow standard good practices. Such as</h>
                             <li>Thoroughly Separate and Understand Data Model</li>
                             <li>Minimize Network Requests</li>
                             <li>Minimize Page Reloads</li>
                             <li>Optimize View Updates</li>
-                        </ul>
+                        </aside>
                     </section>
-                    <section>
-                        <h2>Improving Performance With Angular</h2>
-                        <ul>
-                            <li>Simplify our data model pub/sub for updates. The page will share a single model reference that will marshal the update events to all of the controls.</li>
-                            <li>Single page app, HTML5 and hash ! routing</li>
-                            <li>Separation of Data Promotes Proper Attention to Thorough Understanding</li>
-                        </ul>
-                    </section>
-                    <section>
-                            <h2>Improve current update flow</h2>
-                        <ul>
-                            <li>traditional flow control redraws on any update</li>
-                            <li> Use Angular to avoid flow updates to all controls on single property change</li>
-                        </ul>
-                    </section>
-                    <section>
-                        <h2>Actual Results</h2>
-                        <p>Timings/profile Showing the difference in app performance.</p>
-                    </section>
-				</section>
+                </section>
 
 				<section>
 					<h2>Technology preview and review sample app</h2>
@@ -174,6 +244,17 @@
 						<li>Simplyfying View Update</li>
 						<li>Sorting and Filtering</li>
 					</ol>
+                    <aside class="notes">
+                        <ul>
+                            <li>sometimes you have to work with old poor performing apis</li>
+                            <li>throttling, loading indicators, process notifications </li>
+                            <li>doing work while still in process</li>
+                            <li>ng-grid configuration</li>
+                            <li>flexible templating</li>
+                            <li>sort while downloading</li>
+                            <li>keep in context</li>
+                            <li>unit testing</li>
+                    </aside>
 				</section>
 
                 <section>
@@ -190,10 +271,11 @@
                     <h4>Joel Thornton</h4>
                     <p><a href="mailto:thorntonjn@familysearch.org">thorntonjn@familysearch.org</a></p>
                     <h4>&amp; Mark Gardner</h4>
-                    <p><a href="mailto:thorntonjn@familysearch.org">thorntonjn@familysearch.org</a></p>
+                    <p><a href="mailto:gardnerm@familysearch.org">gardnerm@familysearch.org</a></p>
 
                     <p>
                         <small>Slides and Code Samples <a href="https://github.com/thorntonjn/Sort2013.git">https://github.com/thorntonjn/Sort2013.git </a></small>
+                        <small><a href="https://github.com/markgardner/Sort2013.git">https://github.com/markgardner/Sort2013.git </a></small>
                     </p>
 				</section>
 
