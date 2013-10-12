@@ -50,7 +50,7 @@
                     <h2>What Are We Solving ?</h2>
                     <ul>
                         <li>Temple List </li>
-                        <li>Ancestor Page</li>
+                        <li>FamilyTree App</li>
                         <li>Code Complexity</li>
                     </ul>
                     <aside class="notes">
@@ -238,10 +238,11 @@
 				</section>
 
 				<section>
-					<h2>Temple List</h2>
+                    <section>
+					<h2>Reservation List</h2>
 					<ol>
-						<li>Gathering the Reservation List Data</li>
-						<li>Simplyfying View Update</li>
+						<li>Gathering Data</li>
+						<li>Simplifying Display Logic</li>
 						<li>Sorting and Filtering</li>
 					</ol>
                     <aside class="notes">
@@ -254,11 +255,784 @@
                             <li>sort while downloading</li>
                             <li>keep in context</li>
                             <li>unit testing</li>
+                        </ul>
                     </aside>
+                    </section>
+                    <section>
+                        <h4>Updating Progress While Loading Data</h4>
+                        <pre><code data-trim>
+list.readReservations(owner)
+    .done(
+        function (data) {
+            inflight--;
+
+            // Keep reading reservations while there are more to read
+            if (list.hasMore() && inflight < templeCardService.INFLIGHT_LIMIT) {
+                read(owner);
+            }
+
+            // Notify the the Temple app of the latest block of data
+            dfdCard.notify(data);
+            list.incrementCompletedPages();
+
+            if (list.completedPages() === list.pagesToRead()) {
+                // If we read everything then indicate we are finished
+                dfdCard.resolve({ status: "OK", httpStatus: "200", httpStatusText: "OK", data: { requestedIds: [], rows: [] } });
+            }
+    })
+    .fail(
+        function (data) {
+            dfdCard.reject(data);
+        })
+    }
+
+}
+                      </code></pre>
+                    </section>
+                    <section>
+                        <h4>Throttling $digest cycle</h4>
+                        <pre><code data-trim>
+function startProcessTimer() {
+  if ($scope.test) {
+      processAccumulatedCards();
+  } else {
+   if (!processTimer) {
+      processTimer = setTimeout(function(){
+        processTimer = null;
+        waitTime = PROCESS_LIST_WAIT_TIME;
+        processAccumulatedCards();
+      },waitTime);
+    }
+  }
+};
+
+function accumulateCards(accumulator, cards) {
+  if (accumulator) {
+    for (var i = 0;i < cards.length;i++) {
+      accumulator.push(cards[i]);
+    }
+  }
+};
+
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h4>Data Binding Instead of JQuery Event Binding</h4>
+                        <pre><code data-trim>
+... View template
+<ul class="temple-nav secondary-nav">
+    <li class="all"><a ng-class="{active: page == 'all'}" href="all" ng-click="changeReservationPage($event, 'all')" fs-flash-count="person.allCards.length"><%- i18n('all') %></a></li>
+    <li class="reserved"><a ng-class="{active: page == 'reserved'}" href="reserved" ng-click="changeReservationPage($event, 'reserved')" fs-flash-count="person.reservedCards.length"><%- i18n('notPrinted') %></a></li>
+    <li class="printed"><a ng-class="{active: page == 'printed'}" href="printed" ng-click="changeReservationPage($event, 'printed')" fs-flash-count="person.printedCards.length"><%- i18n('printed') %></a></li>
+    <li class="shared"><a ng-class="{active: page == 'shared'}" href="shared" ng-click="changeReservationPage($event, 'shared')" fs-flash-count="person.sharedCards.length"><%- i18n('shared') %></a></li>
+    <li class="opportunities"><a ng-class="{active: page == 'opportunities'}" href="opportunities" ng-click="changeReservationPage($event, 'opportunities')" fs-flash-count="person.opportunities.length"><%- i18n('opportunities') %></a></li>
+    <li class="helper-pin-init <% if (isLoggedIn && !user.helper) { %>hide<% } %>" data-control="ShowIfHighConfMember">
+        <% if(user && typeof user.helper !== 'undefined'){ user.helper.contactName = user.helper.contactName.replace("'","&#39;")} %>
+        <div class="helperpin-box" data-control="HelperSigninControl" data-config='{"helperName": "<%= ( user && user.profile && user.profile.contactName ) ? user.profile.contactName : "" %>", "helpee": <%= ( user && typeof user.helper !== undefined ) ? JSON.stringify(user.helper) : "null" %>}'></div>
+    </li>
+</ul>
+
+... Controller
+$scope.loading = false;
+$scope.loadingTempleList = false;
+$scope.page = "all";
+$scope.person = {cards:[], allCards:[], reservedCards:[], printedCards:[], sharedCards:[], filteredCards:[], opportunities:[]};
+$scope.printButtonText = lang.print;
+$scope.reservationsByUniqueId = {};
+$scope.rowInstructions = lang.rowSelectionInstructions.format(lang.printOrSharedInstruction);
+$scope.showLegendContent = false;
+$scope.showPrintIndividualButton = false;
+$scope.showPrintListButton = false;
+$scope.showShareIndividualButton = false;
+$scope.showShareListButton = false;
+$scope.showUnshareIndividualButton = false;
+$scope.showUnshareListButton = false;
+$scope.showUnreserveIndividualButton = false;
+$scope.showUnreserveListButton = false;
+$scope.tabFilter = "all";
+$scope.subFilter = "all";
+$scope.userSelections = [];
+$scope.ordinanceColumnHeaderText = lang.ORDINANCES;
+$scope.showOrdinanceFilterDropDown = false;
+$scope.showNameSortDropDown = false;
+                        </code></pre>
+                    </section>
+                    <section>
+                        <h1>ng-grid</h1>
+                        <h4>Powerful, Extensible, Flexible, and Performant</h4>
+                        <pre><code data-trim>
+                            ... View template
+<div class="gridStyle" ng-show="!showOpportunities && person.filteredCards.length > 0" data-ng-model="person.cards" ng-grid="gridOptions"></div>
+
+ ... Controller
+$scope.gridOptions = {
+data: 'filteredCards',
+columnDefs: [
+{field:'sortFields.name',
+displayName:lang.NAME,
+headerCellTemplate:  '<div class="ngHeaderSortColumn {{col.headerClass}}" ng-click="sortChanged()" ng-style="{\'cursor\': col.cursor}" ng-class="{ \'ngSorted\': !noSortVisible}">' +
+'<div ng-click="col.sort($event)" ng-class="\'colt\' + col.index" class="ngHeaderText"><span class="userSelectionCount" ng-show="userSelections.length > 0">({{userSelections.length}})</span>' +
+    ' <div class="sort-title" ng-class="{\'fs-icon-sort-ascending-small\': col.sortDirection === \'desc\', \'fs-icon-sort-descending-small\': col.sortDirection === \'asc\'}"><sub>{{col.sortPriority}}</sub>{{col.displayName}}</div>' +
+    ' <div class="sort-toggle" fs-drop-down="nameSortDropDown"></div>'  +
+    ' <div class="dropdown">' +
+        '   <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" ng-show="showNameSortDropDown">' +
+            '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="setNameSort($event, \'' + lang.NameText + '\',\'sortFields.name\', col)">' + lang.NameText + '</a></li>' +
+            '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="setNameSort($event, \'' + lang.GenderText + '\',\'sortFields.gender\', col)">' + lang.GenderText + '</a></li>' +
+            '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="setNameSort($event, \'' + lang.PersonalIdText + '\',\'sortFields.id\', col)">' + lang.PersonalIdText + '</a></li>' +
+            '   </ul>' +
+        ' </div>' +
+    '</div>',
+cellTemplate:' <div class="col-name-wrapper clearfix fs-icon-{{row.getProperty(\'gender\')|lowercase}}" ng-class="{\'has-unqualified\':showUnqualifiedWarning(row)}" >' +
+    ' <div class="name {{row.getProperty(\'gender\')}}">' +
+        '   <a class="nameLink" href="javascript:FS.noop()" fs-person-card-trigger data-person-id="{{row.getProperty(\'id\')}}" title="{{row.getProperty(\'name\')}}" ng-bind-html="row.getProperty(\'name\')"></a>' +
+        ' </div>' +
+    ' <div class="pid">{{row.getProperty(\'id\')}}</div>' +
+    ' <div class="unqualifiedText">' + lang.noLongerQualified1 + '<a href="/tree#view=ancestor&person={{row.getProperty(\'id\')}}">' + lang.personDetails + '</a>' +  lang.noLongerQualified2 + '<a class="unreserveLink" href="javascript:FS.noop()" data-type="unreserve" data-row-id="{{row.getProperty(\'uniqueId\')}}" data-presenter-type="UnreserveIndividualFlowPresenter" fs-modal-trigger>' + lang.unreserve + '</a>' +  lang.noLongerQualified3 + '</div>' +
+    '</div>           '},
+
+{field:'sortFields.ordinances',
+displayName:lang.ORDINANCES,
+headerCellTemplate: '<div class="ngHeaderSortColumn {{col.headerClass}}" ng-click="sortChanged()" ng-style="{\'cursor\': col.cursor}" ng-class="{ \'ngSorted\': !noSortVisible}">' +
+    '<div ng-click="col.sort($event)" ng-class="\'colt\' + col.index" class="ngHeaderText">' +
+        ' <div class="sort-title" ng-class="{\'fs-icon-sort-ascending-small\': col.sortDirection === \'desc\', \'fs-icon-sort-descending-small\': col.sortDirection === \'asc\'}"><sub>{{col.sortPriority}}</sub>{{ordinanceColumnHeaderText}}</div>' +
+        ' <div class="sort-toggle" fs-drop-down="ordinanceFilterDropDown"></div>'  +
+        ' <div class="dropdown">' +
+            '   <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" ng-show="showOrdinanceFilterDropDown">' +
+                '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="filterOrdinanceColumn($event, \'all\', \'' + lang.ORDINANCES + '\')">' + lang.allOrdinances + '</a></li>' +
+                '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="filterOrdinanceColumn($event, \'B\', \'' + lang.baptism + '\')">' + lang.baptism + '</a></li>' +
+                '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="filterOrdinanceColumn($event, \'C\', \'' + lang.confirmation + '\')">' + lang.confirmation + '</a></li>' +
+                '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="filterOrdinanceColumn($event, \'I\', \'' + lang.initiatory + '\')">' + lang.initiatory + '</a></li>' +
+                '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="filterOrdinanceColumn($event, \'E\', \'' + lang.endowment + '\')">' + lang.endowment + '</a></li>' +
+                '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="filterOrdinanceColumn($event, \'SP\', \'' + lang.sealingToParents + '\')">' + lang.sealingToParents + '</a></li>' +
+                '     <li role="presentation"><a role="menuitem" tabindex="-1" href="#" ng-click="filterOrdinanceColumn($event, \'SS\', \'' + lang.sealingToSpouse + '\')">' + lang.sealingToSpouse + '</a></li>' +
+                '   </ul>' +
+            ' </div>' +
+        '</div>',
+
+    groupLabel: lang.ORDINANCES,
+    cellTemplate: '<div class="ordinances-label">{{getTempleCardText(row.getProperty(\'gender\'))}}</div>' +
+    '<div class="ordinances">' +
+        '<span class="ordIcon {{row.getProperty(\'baptism.status\')}}" title="{{row.getProperty(\'baptism.hoverText\')}}">B</span>' +
+        '<span class="ordIcon {{row.getProperty(\'confirmation.status\')}}" title="{{row.getProperty(\'confirmation.hoverText\')}}">C</span>' +
+        '<span class="ordIcon {{row.getProperty(\'initiatory.status\')}}" title="{{row.getProperty(\'initiatory.hoverText\')}}">I</span>' +
+        '<span class="ordIcon {{row.getProperty(\'endowment.status\')}}" title="{{row.getProperty(\'endowment.hoverText\')}}">E</span>' +
+        '<span class="ordIcon {{row.getProperty(\'sealingToParents.status\')}}" title="{{row.getProperty(\'sealingToParents.hoverText\')}}">SP</span>' +
+        '<span class="ordIcon {{row.getProperty(\'sealingToSpouse.status\')}}" title="{{row.getProperty(\'sealingToSpouse.hoverText\')}}">SS</span>' +
+        '</div>'
+    },
+    {field:'sortFields.sealing',
+    displayName:lang.SEALING,
+    headerCellTemplate: $scope.commonHeaderTemplate,
+    cellTemplate: '<div class="sealings" >' +
+        '<div class="connector" ng-seal-hide="{{!row.getProperty(\'sealingToParents.relationships.fatherName\') || !row.getProperty(\'sealingToParents.relationships.motherName\')}}"></div>' +
+        '<div class="fatherName fs-icon-male-micro " title="{{row.getProperty(\'sealingToParents.relationships.fatherName\')}}" title="{{row.getProperty(\'sealingToSpouse.relationships.fatherName\')}}" ng-bind-html="row.getProperty(\'sealingToParents.relationships.fatherName\')"></div>' +
+        '<div class="motherName fs-icon-female-micro" title="{{row.getProperty(\'sealingToParents.relationships.motherName\')}}" title="{{row.getProperty(\'sealingToSpouse.relationships.motherName\')}}" ng-bind-html="row.getProperty(\'sealingToParents.relationships.motherName\')"></div>' +
+        '<div class="spouseName fs-icon-{{row.getProperty(\'sealingToSpouse.relationships.spouseGender\')|lowercase}}-micro" title="{{row.getProperty(\'sealingToSpouse.relationships.spouseName\')}}"  ng-bind-html="row.getProperty(\'sealingToSpouse.relationships.spouseName\')"></div>' +
+        '</div>'
+    },
+    {field:'sortFields.dateSubmitted',
+    cellFilter: "date",
+    displayName:lang.DATE_RESERVED,
+    headerCellTemplate: $scope.commonHeaderTemplate,
+    cellTemplate:'<div">{{row.getProperty(\'dateSubmitted\')}}</div>' }
+],
+
+rowTemplate:"<div  ng-repeat=\"col in renderedColumns\" ng-class=\"col.colIndex()\" class=\"ngCell {{col.cellClass}}\">" +
+"	<div class=\"ngVerticalBar\" ng-style=\"{height: rowHeight}\" ng-class=\"{ ngVerticalBarVisible: !$last }\">&nbsp;</div>" +
+"	<div ng-cell></div>" +
+"</div>",
+filterOptions:{ filterText: '', useExternalFilter: true },
+showGroupPanel: false,
+showSelectionCheckbox: true,
+virtualizationThreshold:25,
+rowHeight:80,
+colWidth:300,
+selectedItems:$scope.userSelections,
+selectWithCheckboxOnly:true,
+showColumnMenu:false,
+showFilter:false,
+beforeSelectionChange:$scope.beforeSelectionChange,
+afterSelectionChange: $scope.afterSelectionChange,
+checkboxCellTemplate: '<div class="ngSelectionCell" ng-class="{noLongerQualifies:showUnqualifiedWarning(row), \'fs-icon-temple\':showFSIconTemple(row), \'fs-icon-templeinfo\':showFSIconTempleInfo(row)}" " ><input tabindex="-1" class="ngSelectionCheckbox" type="checkbox" ng-checked="row.selected" ng-disabled="row.getProperty(\'disabled\')" /></div>',
+checkboxHeaderTemplate:"<input class=\"ngSelectionHeader\" type=\"checkbox\" ng-show=\"multiSelect\" ng-model=\"checkedState.allSelected\" ng-change=\"toggleSelectAll(checkedState.allSelected, true)\"/></div>"
+
+        </code></pre>
+        </section>
+        <section>
+            <h4>Coupling To Existing Gadgets</h4>
+                <pre><code data-trim>
+templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
+    var service, flowPresenter;
+
+    require.ensure(["ReservationsService", "ReservationsGadget"], function(require) {
+        service = require('ReservationsService')({classicReferenceId: $rootScope.classicReferenceId });
+    });
+
+    function prepareSelectionsForAPI(currentRows, type) {
+        var selectedRows = [];
+        for (var i = 0; i < currentRows.length; i++) {
+            if (currentRows[i].abilities[type]) {
+                selectedRows.push(cleanSelectedRow(currentRows[i]));
+            }
+        }
+        return selectedRows;
+    };
+
+    return {
+        restrict: 'A',
+        link: function (scope, element, attr) {
+            element.click(function() {
+
+                function modalFlowCB(data) {
+                    if (data.state === "startup") {
+                        // presenterType can be PrintIndividualFlowPresenter, PrintAggregateFlowPresenter,
+                        // ReassignIndividualFlowPresenter, ReassignAggregateFlowPresenter,
+                        // UnreserveIndividualFlowPresenter, UnreserveAggregateFlowPresenter
+                        flowPresenter = new org.familysearch.gadget.reservations.presenter[data.passthrough.presenterType]({
+                            "containerId":  data.container.id,
+                            "service": service,
+                            "userId": $rootScope.userId,
+                            "parent": {
+                                refreshOrdinances:scope.refreshOrdinances,
+                                printingCleanup:scope.printingCleanup,
+                                handleRowUpdates:scope.updateDisplayRows,
+                                updateButtonsState:scope.updateButtonsState,
+                                updateStatus:function() {}, //view updated by data bindings automatically
+                                setInstructionState: function() {} //state set based on selection bindings
+                            },
+                            "type": data.passthrough.type, // share, unshare, reserve, unreserve
+                            "data":prepareSelectionsForAPI(data.passthrough.selections, data.passthrough.type)
+                        });
+                    }
+                    else if (data.state === "teardown") {
+                        flowPresenter.release();
+                        flowPresenter = null;
+                    }
+                }
+
+            $(document).trigger('openModal', [modalFlowCB, {containerId: "reservationsContoller", type: attr.type, presenterType: attr.presenterType, selections:scope.getSelections(attr.type, attr.rowId)}]);
+
+             return false;
+        });
+    }
+}
+}]);
+                        </code></pre>
+        </section>
+        <section>
+            <h1>Simple Unit Testing</h1>
+            <pre><code>
+            describe('ReservationsController function', function() {
+
+            FS.debug = function() {};
+
+            describe('ReservationsController', function() {
+            var scope;
+            var ctlr;
+            var eventSpy;
+            var mockTempleCardService = {
+            MAX_PRINT_ROW_COUNT : 50,
+            addAbilities :  function (cards){},
+            addExtraCardInfo :  function (card){ return card; },
+            addExtraInfoToCards :  function (resp){ return resp; },
+            addSortFields :  function (resp){ return resp; },
+            filterCards :  function (newCards, page, subFilter){ return newCards},
+            updateCardsInList :  function (ids, cards){},
+            updateCardInReservationMap :  function (card, ids){},
+            updateCardsInReservationMap :  function (cards, ids){}
+
+            };
+
+            beforeEach(window.module('templeApp'));
+
+            beforeEach(inject(function($rootScope, $controller) {
+            scope = $rootScope.$new();
+            scope.test = true;
+            ctlr = $controller("ReservationsController", {$scope: scope, templeCardService: mockTempleCardService});
+            eventSpy = {preventDefault:sinon.spy(), stopPropagation:sinon.spy()};
+            }));
+
+            //afterSelectionChange
+            it('should show warning when selecting all and going beyond MAX_PRINT_ROW_COUNT', function () {
+            var maxCardsPlusOne = [];
+            for (var i = 0; i < 51; i++) {
+            var id = "id" + i;
+            maxCardsPlusOne.push({id:id});
+            }
+            mockTempleCardService.getPageActions =
+            function (page){
+            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
+            };
+            scope.gridOptions.selectRow = function(index, flag) { };
+            scope.gridOptions.ngGrid = {rowCache :[], $viewport: {scrollTop:sinon.spy()}};
+            scope.afterSelectionChange(maxCardsPlusOne, true);
+
+            chai.expect(scope.error.style.display).to.equal("block");
+            chai.expect(scope.error.text).to.equal(scope.lang.maxPrintWarning.format(mockTempleCardService.MAX_PRINT_ROW_COUNT));
+            chai.expect(scope.error.level).to.equal("warning");
+            chai.expect(scope.gridOptions.ngGrid.$viewport.scrollTop.calledOnce).to.equal(true);
+
+            });
+
+            it('should show warning when selecting one and going beyond MAX_PRINT_ROW_COUNT', function () {
+            var row = {id:"id50", selected:true};
+            var maxCards = [];
+            for (var i = 0; i < 50; i++) {
+            var id = "id" + i;
+            maxCards.push({id:id});
+            }
+            mockTempleCardService.getPageActions =
+            function (page){
+            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
+            };
+            scope.gridOptions.selectRow = function(index, flag) { };
+            scope.gridOptions.ngGrid = {rowCache :[]};
+            scope.userSelections = maxCards;
+            scope.afterSelectionChange(row, true);
+
+            chai.expect(scope.error.style.display).to.equal("block");
+            chai.expect(scope.error.text).to.equal(scope.lang.maxPrintWarning.format(mockTempleCardService.MAX_PRINT_ROW_COUNT));
+            chai.expect(scope.error.level).to.equal("warning");
+
+            });
+
+
+            //beforeSelectionChange
+            it('should show warning if going beyond MAX_PRINT_ROW_COUNT', function () {
+            var row = {id:"id50"};
+            var maxCards = [];
+            for (var i = 0; i < 50; i++) {
+            var id = "id" + i;
+            maxCards.push({id:id});
+            }
+            mockTempleCardService.MAX_PRINT_ROW_COUNT = 50;
+            scope.userSelections = maxCards;
+            scope.beforeSelectionChange(row);
+
+            chai.expect(scope.error.style.display).to.equal("block");
+            chai.expect(scope.error.text).to.equal(scope.lang.maxPrintWarning.format(mockTempleCardService.MAX_PRINT_ROW_COUNT));
+            chai.expect(scope.error.level).to.equal("warning");
+
+            });
+
+            //clearDisplay
+            it ('should clear the display, unselect checkboxes, hide the actions buttons, and show page instructions',
+            function (){
+            // simulate having selections, and showing buttons, and hide page instructions
+            scope.Selections = [{},{}];
+            scope.showPrintIndividualButton = true;
+            scope.showPrintListButton = true;
+            scope.showShareIndividualButton = true;
+            scope.showShareListButton = true;
+            scope.showUnshareIndividualButton = true;
+            scope.showUnshareListButton = true;
+            scope.showUnreserveIndividualButton = true;
+            scope.showUnreserveListButton = true;
+            mockTempleCardService.getPageActions =
+            function (page){
+            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
+            };
+            scope.clearDisplay();
+            chai.expect(scope.userSelections.length).to.equal(0);
+            chai.expect(scope.showPrintIndividualButton).to.equal(false);
+            chai.expect(scope.showPrintListButton).to.equal(false);
+            chai.expect(scope.showShareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareListButton).to.equal(false);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
+            chai.expect(scope.showUnreserveListButton).to.equal(false);
+            chai.expect(scope.showInstructions).to.equal(true);
+            });
+
+            //changeReservationPage
+            it ('should change page, clear selections, and show correct page instructions',
+            function (){
+            scope.gridOptions.ngGrid = {rowCache :[], $viewport: {scrollTop:sinon.spy()}};
+            scope.changeReservationPage(eventSpy, "shared");
+            chai.expect(scope.gridOptions.ngGrid.$viewport.scrollTop.calledOnce).to.equal(true);
+
+            });
+
+            //getSelections
+            it ('should return two print selections', function () {
+            var selections = [
+            {id:'id1', uniqueId:'id1', abilities:{ print:true}},
+            {id:'id2', uniqueId:'id2', abilities:{}},
+            {id:'id3', uniqueId:'id3', abilities:{print:true}}
+            ];
+
+            mockTempleCardService.reservationsByUniqueId =
+            { id1:selections[0], id2:selections[1], id3:selections[2] };
+
+            scope.userSelections = selections;
+
+
+            var userSelections = scope.getSelections("print");
+            chai.expect(userSelections.length).to.equal(2);
+            chai.expect(userSelections[0].id).to.equal('id1');
+            chai.expect(userSelections[1].id).to.equal('id3');
+
+            });
+
+            if ('should return 1 unreserve selection and one dependent unreserve selection', function () {
+            var selections = [
+            {id:'id1', uniqueId:'id1', abilities:{ unreserve:true}},
+            {id:'id2', uniqueId:'id2', abilities:{}},
+            {id:'id3', uniqueId:'id3', abilities:{print:true}}
+            ];
+
+            mockTempleCardService.reservationsByUniqueId =
+            { id1:selections[0], id2:selections[1], id3:selections[2] };
+
+            mockTempleCardService.getDependentUnreserveRows = function(mainRow, unreserveRows, reservationMapById) {
+            unreserveRows.push({id:'id4', uniqueId:"id4", abilities:{unreserve:true}});
+            }
+
+            scope.userSelections = selections;
+
+            var userSelections = scope.getSelections("unreserve");
+            chai.expect(userSelections.length).to.equal(2);
+            chai.expect(userSelections[0].id).to.equal('id1');
+            chai.expect(userSelections[1].id).to.equal('id4');
+            });
+
+            // filterOrdinanceColumn
+            it ('Should change filter and update ordinance column header text', function () {
+            scope.gridOptions = { sortBy : function (filter) {} };
+
+            scope.filterOrdinanceColumn(eventSpy, "B", scope.lang.ORDINANCES);
+
+            chai.expect(scope.subFilter).to.equal("B");
+            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(false);
+            chai.expect(scope.ordinanceColumnHeaderText).to.equal(scope.lang.ORDINANCES);
+            chai.expect(scope.showOpportunities).to.equal(false);
+            chai.expect(scope.tabFilter).to.equal("all");
+            chai.expect(eventSpy.preventDefault.calledOnce).to.equal(true);
+            chai.expect(eventSpy.stopPropagation.calledOnce).to.equal(true);
+
+            });
+
+            //toggleLegend
+            it ('should hide the legend', function() {
+            chai.expect(scope.showLegendContent).to.equal(false);
+            scope.toggleLegend();
+            chai.expect(scope.showLegendContent).to.equal(true);
+            scope.hideLegend();
+            chai.expect(scope.showLegendContent).to.equal(false);
+
+            });
+
+            //loadReservationList
+            it ('should load three ordinances through progress and done templeCardService notifications ', function() {
+            var rows = [{id:"id1", name:"Updated Person1"}, {id:"id2", name:"Updated Person1"}, {id:"id3"}],
+            templeCards1 = {data:{rows:rows}},
+            templeCards3 = [{data:{rows:[]}}];
+            scope.userId = "userId";
+
+            mockTempleCardService.getCardList = function(userId) {
+            var dfd = $.Deferred();
+            dfd.notify(templeCards1);
+            dfd.resolve(templeCards3);
+            return dfd.promise();
+            }
+
+            mockTempleCardService.filterCards = function(accumulatedCards, filter) {
+
+            for (var i = 0; i < accumulatedCards.length; i++) {
+            filter[0].cards.push(accumulatedCards[i]);
+            }
+
+            }
+
+            scope.loadReservationList();
+            chai.expect(scope.loading).to.equal(false);
+            chai.expect(scope.loadingTempleList).to.equal(false);
+            chai.expect(scope.cards.length).to.be.equal(3);
+
+            });
+
+            //printingCleanup
+            it ('printingCleanup should clear the display, unselect checkboxes, hide the actions buttons, and show page instructions',
+            function (){
+            // simulate having selections, and showing buttons, and hide page instructions
+            scope.Selections = [{},{}];
+            scope.showPrintIndividualButton = true;
+            scope.showPrintListButton = true;
+            scope.showShareIndividualButton = true;
+            scope.showShareListButton = true;
+            scope.showUnshareIndividualButton = true;
+            scope.showUnshareListButton = true;
+            scope.showUnreserveIndividualButton = true;
+            scope.showUnreserveListButton = true;
+            scope.printingCleanup();
+            chai.expect(scope.userSelections.length).to.equal(0);
+            chai.expect(scope.showPrintIndividualButton).to.equal(false);
+            chai.expect(scope.showPrintListButton).to.equal(false);
+            chai.expect(scope.showShareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareListButton).to.equal(false);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
+            chai.expect(scope.showUnreserveListButton).to.equal(false);
+            chai.expect(scope.showInstructions).to.equal(true);
+            });
+
+            //refreshOrdinances
+            it('should handle empty ids when updateOrdinances is called', function() {
+            scope.refreshOrdinances({});
+            chai.expect(scope.filteredCards).not.to.equal(undefined);
+            });
+
+
+            it ('should updateDisplayRows when updateOrdinances is called', function () {
+            var data = [{id:"id1", name:"Updated Person1"}, {id:"id1", name:"Updated Person1"}];
+
+            mockTempleCardService.getCards = function(userId, ids) {
+            var dfd = $.Deferred();
+            dfd.resolve(data);
+            return dfd.promise();
+            }
+
+            scope.person.cards = [{id:"id1", name:"Person1"}];
+            mockTempleCardService.updateCardsInList =  function (ids, cards){ return cards.push({id:"id1", name:"Updated Person1"});};
+
+            scope.refreshOrdinances(["id1"]);
+            chai.expect(scope.loading).to.equal(false);
+            chai.expect(scope.loadingTempleList).to.equal(false);
+            chai.expect(scope.cards.length).to.be.equal(2);
+
+            });
+
+            it ('should show error when refreshOrdinances is called', function () {
+            mockTempleCardService.getCards = function(userId, ids) {
+            var dfd = $.Deferred();
+            dfd.reject("InternalServerError");
+            return dfd.promise();
+            }
+
+            scope.person.cards = [{id:"id1", name:"Person1"}];
+            scope.refreshOrdinances(["id1"]);
+            chai.expect(scope.loading).to.equal(false);
+            chai.expect(scope.loadingTempleList).to.equal(false);
+            chai.expect(scope.filteredCards.length).to.equal(0);
+            chai.expect(scope.error.style.display).to.equal("block");
+            chai.expect(scope.error.text).to.equal(scope.lang.generalError);
+            chai.expect(scope.error.level).to.equal("error");
+
+            });
+
+
+            //setNameSort
+            it ('should setNameSort to gender and close dropdown', function() {
+            var colSpy = {sort:sinon.spy()};
+            scope.setNameSort(eventSpy, "Gender", "gender", colSpy);
+            chai.expect(eventSpy.preventDefault.calledOnce).to.equal(true);
+            chai.expect(eventSpy.stopPropagation.calledOnce).to.equal(true);
+            chai.expect(colSpy.sort.calledOnce).to.equal(true);
+            chai.expect(colSpy.displayName).to.equal("Gender");
+            chai.expect(colSpy.field).to.equal("gender");
+            chai.expect(scope.showNameSortDropDown).to.equal(false);
+
+            });
+
+            //showUnqualifiedWarning
+            it ('should show warning', function () {
+            chai.expect(scope.showUnqualifiedWarning({entity:{fullyAssignedToTemple:false, abilities:{unreserve:true}}})).to.equal(true);
+
+            });
+
+            //showFSIconTemple
+            it ('should show FSIconTemple', function () {
+            chai.expect(scope.showFSIconTemple({entity:{fullyAssignedToTemple:true, fullyPrinted:true}})).to.equal(true);
+
+            });
+
+            //showFSIconTempleInfo
+            it ('should FSIconTempleInfo warning', function () {
+            chai.expect(scope.showFSIconTempleInfo({entity:{fullyAssignedToTemple:false, fullyPrinted:true, abilities:{}}})).to.equal(true);
+
+            });
+
+            //sortChanged
+            it ('sortChanged should deselect all selected rows and reenable all rows', function() {
+            var deselectedIndexes = [];
+            scope.filteredCards = [{disabled:false}, {disabled:false}, {disabled:true} ];
+            scope.userSelections = [scope.filteredCards[0], scope.filteredCards[1]];
+            scope.gridOptions.selectRow = function (index, select) {
+            chai.expect(select).to.equal(false);
+            deselectedIndexes.push(index);
+            };
+            scope.sortChanged();
+            chai.expect(deselectedIndexes.length).to.equal(3);
+            chai.expect(scope.filteredCards[2].disabled).to.equal(false);
+
+            });
+
+            //toggleLegend
+            it ('should toggle the legend', function() {
+            chai.expect(scope.showLegendContent).to.equal(false);
+            scope.toggleLegend();
+            chai.expect(scope.showLegendContent).to.equal(true);
+            scope.toggleLegend();
+            chai.expect(scope.showLegendContent).to.equal(false);
+            });
+
+            //toggleOrdinanceDropdown
+            it ('should toggleOrdinanceDropdown', function() {
+            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(false);
+            scope.toggleDropDown("ordinanceFilterDropDown");
+            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(true);
+            scope.toggleDropDown("ordinanceFilterDropDown");
+            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(false);
+            });
+
+            //toggleNameSortDropdown
+            it ('should toggleNameSortDropdown', function() {
+            chai.expect(scope.showNameSortDropDown).to.equal(false);
+            scope.toggleDropDown("nameSortDropDown");
+            chai.expect(scope.showNameSortDropDown).to.equal(true);
+            scope.toggleDropDown("nameSortDropDown");
+            chai.expect(scope.showNameSortDropDown).to.equal(false);
+            });
+
+            //updateButtonsState
+            it ('updateButtonsState should not show action buttons when no actions available', function () {
+            mockTempleCardService.getPageActions =
+            function (page){
+            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
+            };
+
+            //initially buttons should not be set
+            chai.expect(scope.showPrintIndividualButton).to.equal(false);
+            chai.expect(scope.showPrintListButton).to.equal(false);
+            chai.expect(scope.showShareIndividualButton).to.equal(false);
+            chai.expect(scope.showShareListButton).to.equal(false);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareListButton).to.equal(false);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
+            chai.expect(scope.showUnreserveListButton).to.equal(false);
+
+            scope.updateButtonsState();
+
+            chai.expect(scope.showPrintIndividualButton).to.equal(false);
+            chai.expect(scope.showPrintListButton).to.equal(false);
+            chai.expect(scope.showShareIndividualButton).to.equal(false);
+            chai.expect(scope.showShareListButton).to.equal(false);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareListButton).to.equal(false);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
+            chai.expect(scope.showUnreserveListButton).to.equal(false);
+
+            });
+
+            it ('updateButtonsState should show individual Flow action buttons when 1 action available', function () {
+            mockTempleCardService.getPageActions = function() {
+            return ({printableIds:["id1"], shareableIds:["id1"], unshareableIds:["id1"], unreserveableIds:["id1"]});
+            };
+
+            //initially buttons should not be set
+            chai.expect(scope.showPrintIndividualButton).to.equal(false);
+            chai.expect(scope.showPrintListButton).to.equal(false);
+            chai.expect(scope.showShareIndividualButton).to.equal(false);
+            chai.expect(scope.showShareListButton).to.equal(false);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareListButton).to.equal(false);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
+            chai.expect(scope.showUnreserveListButton).to.equal(false);
+
+            scope.updateButtonsState();
+
+            chai.expect(scope.showPrintIndividualButton).to.equal(true);
+            chai.expect(scope.showPrintListButton).to.equal(false);
+            chai.expect(scope.showShareIndividualButton).to.equal(true);
+            chai.expect(scope.showShareListButton).to.equal(false);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(true);
+            chai.expect(scope.showUnshareListButton).to.equal(false);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(true);
+            chai.expect(scope.showUnreserveListButton).to.equal(false);
+
+            });
+
+            it ('updateButtonsState should show aggregate Flow action buttons when more than 1 action available', function () {
+            mockTempleCardService.getPageActions = function() {
+            return ({printableIds:["id1", "id2"], shareableIds:["id1", "id2"], unshareableIds:["id1", "id2"], unreserveableIds:["id1", "id2"]});
+            };
+
+            //initially buttons should not be set
+            chai.expect(scope.showPrintIndividualButton).to.equal(false);
+            chai.expect(scope.showPrintListButton).to.equal(false);
+            chai.expect(scope.showShareIndividualButton).to.equal(false);
+            chai.expect(scope.showShareListButton).to.equal(false);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareListButton).to.equal(false);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
+            chai.expect(scope.showUnreserveListButton).to.equal(false);
+
+            scope.updateButtonsState();
+
+            chai.expect(scope.showPrintIndividualButton).to.equal(false);
+            chai.expect(scope.showPrintListButton).to.equal(true);
+            chai.expect(scope.showShareIndividualButton).to.equal(false);
+            chai.expect(scope.showShareListButton).to.equal(true);
+            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
+            chai.expect(scope.showUnshareListButton).to.equal(true);
+            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
+            chai.expect(scope.showUnreserveListButton).to.equal(true);
+
+            });
+
+            //updateDisplayRows
+            it ('should updateDisplayRows replacing one row with zero rows', function () {
+            var mockResp = {
+            data:{rows:[], requestedIds:["id1"]}
+            };
+            scope.filterCards = [{id:"id1"}];
+            mockTempleCardService.updateCardsInList =  function (ids, cards){};
+            scope.updateDisplayRows(mockResp);
+            chai.expect(scope.filteredCards.length).to.be.equal(0);
+            });
+
+            it ('should replace one row with one row', function () {
+            var mockResp = {
+            data:{rows:[{id:"id1", name:"Updated Person1"}], requestedIds:["id1"]}
+
+            };
+            scope.person.cards = [{id:"id1", name:"Person1"}, {id:"id2", name:"Person2"}];
+            scope.updateDisplayRows(mockResp);
+            chai.expect(scope.cards.length).to.be.equal(2);
+            });
+
+            it ('should replace one row with two rows', function () {
+            var mockResp = {
+            data:{rows:[{id:"id1", name:"Updated Person1"}, {id:"id1", name:"Updated Person1"}], requestedIds:["id1"]}
+
+            };
+            scope.person.cards = [{id:"id1", name:"Person1"}];
+            mockTempleCardService.updateCardsInList =  function (ids, cards){ return cards.push({id:"id1", name:"Updated Person1"});};
+            scope.updateDisplayRows(mockResp);
+            chai.expect(scope.cards.length).to.be.equal(2);
+            });
+
+            });
+
+
+            });
+
+            </code></pre>
+        </section>
+        <section>
+            <h1>Winnings</h1>
+            <ul>
+                <li>Better Performance</li>
+                <li>Sorting and Filtering</li>
+                <li>30%fewer lines of code</li>
+                <li>More maintainable Tesing</li>
+            </ul>
+        </section>
+
 				</section>
 
                 <section>
-                    <h2>Ancestor Page</h2>
+                    <h2>FamilyTree App</h2>
                     <ol>
                         <li>Multiple Isolated Controllers</li>
                         <li>Same Data Model</li>
