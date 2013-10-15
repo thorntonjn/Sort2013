@@ -45,7 +45,6 @@
 						<small>Slides and Code Samples <a href="https://github.com/thorntonjn/Sort2013.git">https://github.com/thorntonjn/Sort2013.git </a></small>
 					</p>
 				</section>
-
                 <section>
                     <h2>What Are We Solving ?</h2>
                     <ul>
@@ -63,7 +62,7 @@
                     </aside>
                 </section>
 
-				<section>
+                <section>
 					<h2>Why Angular JS</h2>
 					<ul>
                         <li>Popularity and Momentum </li>
@@ -150,6 +149,7 @@
                         <aside class="notes">
                             <h2>The Right Amount of Complexity</h2>
                             <ul>
+                                <p>Charles Anthony Richard Hoare, British computer scientist, and winner of the 1980 Turing Award. fundamental contributions, design of programming languages, developed Quicksort</p>
                                 <li>Avoid</li>
                                 <ul>
                                     <li>complex solution to a simple problem</li>
@@ -203,6 +203,8 @@
                         </ul>
                         <aside class="notes">
                             <ul>
+                                <li>complete control over data model, consider what you will be using your data for, how you gather, and how you will store it</li>
+                                <li>plain-old JavaScript objects, psuedo-classes, which libraries like $resource or underscorce</li>
                                 <li>Little or No view binding logic</li>
                                 <li>Using angular directives to construct dom provides free common optimizations</li>
                             </ul>
@@ -214,6 +216,8 @@
                             <li>minimize data bindings</li>
                             <li>reduce $digest cyles</li>
                             <li>minimize computation in bindings</li>
+                            <li><a href="https://github.com/angular/angularjs-batarang">AngularJS Batarang</a> or <a href="https://developers.google.com/chrome-developer-tools/docs/cpu-profiling">Chrome's built-in CPU profiling</a></li>
+
 
                         </ul>
                         <aside class="notes">
@@ -222,23 +226,23 @@
                             <li>minimize data binding</li>
                             <h>Follow standard good practices. Such as</h>
                             <li>Thoroughly Separate and Understand Data Model</li>
-                            <li>Minimize Network Requests</li>
-                            <li>Minimize Page Reloads</li>
-                            <li>Optimize View Updates</li>
+                            <li>No big apps, write small focused modular parts</li>
+                            <li>Be consistent and organized, AngularJS Seed Project and Yeoman can give you a start</li>
+                            <li>Minimize Network Requests & Page Reloads</li>
+                            <li>Use Scope effectively to optimize updates</li>
                         </aside>
                     </section>
                 </section>
 
 				<section>
-					<h2>Technology preview and review sample app</h2>
+					<h2>Technology Preview Live Demonstration</h2>
 					<ul>
                         <li>Improving Temple App For Large Data Sets</li>
 						<li>Enhancing the Tree App</li>
 					</ul>
 				</section>
-
+                <section>
 				<section>
-                    <section>
 					<h2>Reservation List</h2>
 					<ol>
 						<li>Gathering Data</li>
@@ -522,46 +526,44 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
         <section>
             <h1>Simple Unit Testing</h1>
             <pre><code>
-            describe('ReservationsController function', function() {
+describe('ReservationsController function', function() {
 
-            FS.debug = function() {};
+    FS.debug = function() {};
+    describe('ReservationsController', function() {
+        var scope;
+        var ctlr;
+        var eventSpy;
+        var mockTempleCardService = {
+        MAX_PRINT_ROW_COUNT : 50,
+        addAbilities :  function (cards){},
+        addExtraCardInfo :  function (card){ return card; },
+        addExtraInfoToCards :  function (resp){ return resp; },
+        addSortFields :  function (resp){ return resp; },
+        filterCards :  function (newCards, page, subFilter){ return newCards},
+        updateCardsInList :  function (ids, cards){},
+        updateCardInReservationMap :  function (card, ids){},
+        updateCardsInReservationMap :  function (cards, ids){}
+    };
 
-            describe('ReservationsController', function() {
-            var scope;
-            var ctlr;
-            var eventSpy;
-            var mockTempleCardService = {
-            MAX_PRINT_ROW_COUNT : 50,
-            addAbilities :  function (cards){},
-            addExtraCardInfo :  function (card){ return card; },
-            addExtraInfoToCards :  function (resp){ return resp; },
-            addSortFields :  function (resp){ return resp; },
-            filterCards :  function (newCards, page, subFilter){ return newCards},
-            updateCardsInList :  function (ids, cards){},
-            updateCardInReservationMap :  function (card, ids){},
-            updateCardsInReservationMap :  function (cards, ids){}
+    beforeEach(window.module('templeApp'));
+    beforeEach(inject(function($rootScope, $controller) {
+        scope = $rootScope.$new();
+        scope.test = true;
+        ctlr = $controller("ReservationsController", {$scope: scope, templeCardService: mockTempleCardService});
+        eventSpy = {preventDefault:sinon.spy(), stopPropagation:sinon.spy()};
+    }));
 
-            };
-
-            beforeEach(window.module('templeApp'));
-
-            beforeEach(inject(function($rootScope, $controller) {
-            scope = $rootScope.$new();
-            scope.test = true;
-            ctlr = $controller("ReservationsController", {$scope: scope, templeCardService: mockTempleCardService});
-            eventSpy = {preventDefault:sinon.spy(), stopPropagation:sinon.spy()};
-            }));
-
-            //afterSelectionChange
-            it('should show warning when selecting all and going beyond MAX_PRINT_ROW_COUNT', function () {
-            var maxCardsPlusOne = [];
-            for (var i = 0; i < 51; i++) {
+    //afterSelectionChange
+    it('should show warning when selecting all and going beyond MAX_PRINT_ROW_COUNT', function () {
+        var maxCardsPlusOne = [];
+        for (var i = 0; i < 51; i++) {
             var id = "id" + i;
             maxCardsPlusOne.push({id:id});
-            }
-            mockTempleCardService.getPageActions =
+        }
+
+        mockTempleCardService.getPageActions =
             function (page){
-            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
+                return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
             };
             scope.gridOptions.selectRow = function(index, flag) { };
             scope.gridOptions.ngGrid = {rowCache :[], $viewport: {scrollTop:sinon.spy()}};
@@ -572,19 +574,21 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             chai.expect(scope.error.level).to.equal("warning");
             chai.expect(scope.gridOptions.ngGrid.$viewport.scrollTop.calledOnce).to.equal(true);
 
-            });
+        }
+    );
 
-            it('should show warning when selecting one and going beyond MAX_PRINT_ROW_COUNT', function () {
+    it('should show warning when selecting one and going beyond MAX_PRINT_ROW_COUNT',
+        function () {
             var row = {id:"id50", selected:true};
             var maxCards = [];
             for (var i = 0; i < 50; i++) {
-            var id = "id" + i;
-            maxCards.push({id:id});
+                var id = "id" + i;
+                maxCards.push({id:id});
             }
             mockTempleCardService.getPageActions =
-            function (page){
-            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
-            };
+                function (page){
+                    return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
+                };
             scope.gridOptions.selectRow = function(index, flag) { };
             scope.gridOptions.ngGrid = {rowCache :[]};
             scope.userSelections = maxCards;
@@ -593,17 +597,18 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             chai.expect(scope.error.style.display).to.equal("block");
             chai.expect(scope.error.text).to.equal(scope.lang.maxPrintWarning.format(mockTempleCardService.MAX_PRINT_ROW_COUNT));
             chai.expect(scope.error.level).to.equal("warning");
+        }
+    );
 
-            });
 
-
-            //beforeSelectionChange
-            it('should show warning if going beyond MAX_PRINT_ROW_COUNT', function () {
+    //beforeSelectionChange
+    it('should show warning if going beyond MAX_PRINT_ROW_COUNT',
+        function () {
             var row = {id:"id50"};
             var maxCards = [];
             for (var i = 0; i < 50; i++) {
-            var id = "id" + i;
-            maxCards.push({id:id});
+                var id = "id" + i;
+                maxCards.push({id:id});
             }
             mockTempleCardService.MAX_PRINT_ROW_COUNT = 50;
             scope.userSelections = maxCards;
@@ -612,12 +617,12 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             chai.expect(scope.error.style.display).to.equal("block");
             chai.expect(scope.error.text).to.equal(scope.lang.maxPrintWarning.format(mockTempleCardService.MAX_PRINT_ROW_COUNT));
             chai.expect(scope.error.level).to.equal("warning");
+        }
+    );
 
-            });
-
-            //clearDisplay
-            it ('should clear the display, unselect checkboxes, hide the actions buttons, and show page instructions',
-            function (){
+    //clearDisplay
+    it ('should clear the display, unselect checkboxes, hide the actions buttons, and show page instructions',
+        function (){
             // simulate having selections, and showing buttons, and hide page instructions
             scope.Selections = [{},{}];
             scope.showPrintIndividualButton = true;
@@ -630,7 +635,7 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             scope.showUnreserveListButton = true;
             mockTempleCardService.getPageActions =
             function (page){
-            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
+                return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
             };
             scope.clearDisplay();
             chai.expect(scope.userSelections.length).to.equal(0);
@@ -642,118 +647,118 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
             chai.expect(scope.showUnreserveListButton).to.equal(false);
             chai.expect(scope.showInstructions).to.equal(true);
-            });
+        }
+    );
 
-            //changeReservationPage
-            it ('should change page, clear selections, and show correct page instructions',
-            function (){
+    //changeReservationPage
+    it ('should change page, clear selections, and show correct page instructions',
+        function (){
             scope.gridOptions.ngGrid = {rowCache :[], $viewport: {scrollTop:sinon.spy()}};
             scope.changeReservationPage(eventSpy, "shared");
             chai.expect(scope.gridOptions.ngGrid.$viewport.scrollTop.calledOnce).to.equal(true);
+        }
+    );
 
-            });
-
-            //getSelections
-            it ('should return two print selections', function () {
+    //getSelections
+    it ('should return two print selections',
+        function () {
             var selections = [
-            {id:'id1', uniqueId:'id1', abilities:{ print:true}},
-            {id:'id2', uniqueId:'id2', abilities:{}},
-            {id:'id3', uniqueId:'id3', abilities:{print:true}}
+                {id:'id1', uniqueId:'id1', abilities:{ print:true}},
+                {id:'id2', uniqueId:'id2', abilities:{}},
+                {id:'id3', uniqueId:'id3', abilities:{print:true}}
             ];
 
-            mockTempleCardService.reservationsByUniqueId =
-            { id1:selections[0], id2:selections[1], id3:selections[2] };
+            mockTempleCardService.reservationsByUniqueId = {
+                id1:selections[0], id2:selections[1], id3:selections[2]
+            };
 
             scope.userSelections = selections;
-
-
             var userSelections = scope.getSelections("print");
             chai.expect(userSelections.length).to.equal(2);
             chai.expect(userSelections[0].id).to.equal('id1');
             chai.expect(userSelections[1].id).to.equal('id3');
 
-            });
+        }
+    );
 
-            if ('should return 1 unreserve selection and one dependent unreserve selection', function () {
-            var selections = [
+    it ('should return 1 unreserve selection and one dependent unreserve selection', function () {
+        var selections = [
             {id:'id1', uniqueId:'id1', abilities:{ unreserve:true}},
             {id:'id2', uniqueId:'id2', abilities:{}},
             {id:'id3', uniqueId:'id3', abilities:{print:true}}
-            ];
+        ];
 
-            mockTempleCardService.reservationsByUniqueId =
+        mockTempleCardService.reservationsByUniqueId =
             { id1:selections[0], id2:selections[1], id3:selections[2] };
 
-            mockTempleCardService.getDependentUnreserveRows = function(mainRow, unreserveRows, reservationMapById) {
+        mockTempleCardService.getDependentUnreserveRows = function(mainRow, unreserveRows, reservationMapById) {
             unreserveRows.push({id:'id4', uniqueId:"id4", abilities:{unreserve:true}});
-            }
+        }
 
-            scope.userSelections = selections;
+        scope.userSelections = selections;
 
-            var userSelections = scope.getSelections("unreserve");
-            chai.expect(userSelections.length).to.equal(2);
-            chai.expect(userSelections[0].id).to.equal('id1');
-            chai.expect(userSelections[1].id).to.equal('id4');
-            });
+        var userSelections = scope.getSelections("unreserve");
+        chai.expect(userSelections.length).to.equal(2);
+        chai.expect(userSelections[0].id).to.equal('id1');
+        chai.expect(userSelections[1].id).to.equal('id4');
+    });
 
-            // filterOrdinanceColumn
-            it ('Should change filter and update ordinance column header text', function () {
-            scope.gridOptions = { sortBy : function (filter) {} };
+    // filterOrdinanceColumn
+    it ('Should change filter and update ordinance column header text', function () {
+        scope.gridOptions = { sortBy : function (filter) {} };
 
-            scope.filterOrdinanceColumn(eventSpy, "B", scope.lang.ORDINANCES);
+        scope.filterOrdinanceColumn(eventSpy, "B", scope.lang.ORDINANCES);
 
-            chai.expect(scope.subFilter).to.equal("B");
-            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(false);
-            chai.expect(scope.ordinanceColumnHeaderText).to.equal(scope.lang.ORDINANCES);
-            chai.expect(scope.showOpportunities).to.equal(false);
-            chai.expect(scope.tabFilter).to.equal("all");
-            chai.expect(eventSpy.preventDefault.calledOnce).to.equal(true);
-            chai.expect(eventSpy.stopPropagation.calledOnce).to.equal(true);
+        chai.expect(scope.subFilter).to.equal("B");
+        chai.expect(scope.showOrdinanceFilterDropDown).to.equal(false);
+        chai.expect(scope.ordinanceColumnHeaderText).to.equal(scope.lang.ORDINANCES);
+        chai.expect(scope.showOpportunities).to.equal(false);
+        chai.expect(scope.tabFilter).to.equal("all");
+        chai.expect(eventSpy.preventDefault.calledOnce).to.equal(true);
+        chai.expect(eventSpy.stopPropagation.calledOnce).to.equal(true);
 
-            });
+    });
 
-            //toggleLegend
-            it ('should hide the legend', function() {
-            chai.expect(scope.showLegendContent).to.equal(false);
-            scope.toggleLegend();
-            chai.expect(scope.showLegendContent).to.equal(true);
-            scope.hideLegend();
-            chai.expect(scope.showLegendContent).to.equal(false);
+    //toggleLegend
+    it ('should hide the legend', function() {
+        chai.expect(scope.showLegendContent).to.equal(false);
+        scope.toggleLegend();
+        chai.expect(scope.showLegendContent).to.equal(true);
+        scope.hideLegend();
+        chai.expect(scope.showLegendContent).to.equal(false);
+    });
 
-            });
+    //loadReservationList
+    it ('should load three ordinances through progress and done templeCardService notifications ', function() {
+        var rows = [{id:"id1", name:"Updated Person1"}, {id:"id2", name:"Updated Person1"}, {id:"id3"}],
+        templeCards1 = {data:{rows:rows}},
+        templeCards3 = [{data:{rows:[]}}];
+        scope.userId = "userId";
 
-            //loadReservationList
-            it ('should load three ordinances through progress and done templeCardService notifications ', function() {
-            var rows = [{id:"id1", name:"Updated Person1"}, {id:"id2", name:"Updated Person1"}, {id:"id3"}],
-            templeCards1 = {data:{rows:rows}},
-            templeCards3 = [{data:{rows:[]}}];
-            scope.userId = "userId";
-
-            mockTempleCardService.getCardList = function(userId) {
+        mockTempleCardService.getCardList = function(userId) {
             var dfd = $.Deferred();
             dfd.notify(templeCards1);
             dfd.resolve(templeCards3);
             return dfd.promise();
-            }
+        }
 
-            mockTempleCardService.filterCards = function(accumulatedCards, filter) {
-
+        mockTempleCardService.filterCards = function(accumulatedCards, filter) {
             for (var i = 0; i < accumulatedCards.length; i++) {
-            filter[0].cards.push(accumulatedCards[i]);
+                filter[0].cards.push(accumulatedCards[i]);
             }
+        }
 
-            }
+        scope.loadReservationList();
+        chai.expect(scope.loading).to.equal(false);
+        chai.expect(scope.loadingTempleList).to.equal(false);
+        chai.expect(scope.cards.length).to.be.equal(3);
 
-            scope.loadReservationList();
-            chai.expect(scope.loading).to.equal(false);
-            chai.expect(scope.loadingTempleList).to.equal(false);
-            chai.expect(scope.cards.length).to.be.equal(3);
+        }
+    );
 
-            });
-
-            //printingCleanup
-            it ('printingCleanup should clear the display, unselect checkboxes, hide the actions buttons, and show page instructions',
-            function (){
+    //printingCleanup
+    it ('printingCleanup should clear the display, unselect checkboxes, hide the actions buttons, and show page instructions',
+        function (){
             // simulate having selections, and showing buttons, and hide page instructions
             scope.Selections = [{},{}];
             scope.showPrintIndividualButton = true;
@@ -774,41 +779,44 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
             chai.expect(scope.showUnreserveListButton).to.equal(false);
             chai.expect(scope.showInstructions).to.equal(true);
-            });
+        }
+    );
 
-            //refreshOrdinances
-            it('should handle empty ids when updateOrdinances is called', function() {
+    //refreshOrdinances
+    it('should handle empty ids when updateOrdinances is called',
+        function() {
             scope.refreshOrdinances({});
             chai.expect(scope.filteredCards).not.to.equal(undefined);
-            });
+        }
+    );
 
 
-            it ('should updateDisplayRows when updateOrdinances is called', function () {
+    it ('should updateDisplayRows when updateOrdinances is called',
+        function () {
             var data = [{id:"id1", name:"Updated Person1"}, {id:"id1", name:"Updated Person1"}];
 
             mockTempleCardService.getCards = function(userId, ids) {
             var dfd = $.Deferred();
             dfd.resolve(data);
             return dfd.promise();
-            }
+        }
 
-            scope.person.cards = [{id:"id1", name:"Person1"}];
-            mockTempleCardService.updateCardsInList =  function (ids, cards){ return cards.push({id:"id1", name:"Updated Person1"});};
+        scope.person.cards = [{id:"id1", name:"Person1"}];
+        mockTempleCardService.updateCardsInList =  function (ids, cards){ return cards.push({id:"id1", name:"Updated Person1"});};
+        scope.refreshOrdinances(["id1"]);
+        chai.expect(scope.loading).to.equal(false);
+        chai.expect(scope.loadingTempleList).to.equal(false);
+        chai.expect(scope.cards.length).to.be.equal(2);
+        }
+    );
 
-            scope.refreshOrdinances(["id1"]);
-            chai.expect(scope.loading).to.equal(false);
-            chai.expect(scope.loadingTempleList).to.equal(false);
-            chai.expect(scope.cards.length).to.be.equal(2);
-
-            });
-
-            it ('should show error when refreshOrdinances is called', function () {
+    it ('should show error when refreshOrdinances is called',
+        function () {
             mockTempleCardService.getCards = function(userId, ids) {
-            var dfd = $.Deferred();
-            dfd.reject("InternalServerError");
-            return dfd.promise();
+                var dfd = $.Deferred();
+                dfd.reject("InternalServerError");
+                return dfd.promise();
             }
-
             scope.person.cards = [{id:"id1", name:"Person1"}];
             scope.refreshOrdinances(["id1"]);
             chai.expect(scope.loading).to.equal(false);
@@ -817,12 +825,13 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             chai.expect(scope.error.style.display).to.equal("block");
             chai.expect(scope.error.text).to.equal(scope.lang.generalError);
             chai.expect(scope.error.level).to.equal("error");
+        }
+    );
 
-            });
 
-
-            //setNameSort
-            it ('should setNameSort to gender and close dropdown', function() {
+    //setNameSort
+    it ('should setNameSort to gender and close dropdown',
+        function() {
             var colSpy = {sort:sinon.spy()};
             scope.setNameSort(eventSpy, "Gender", "gender", colSpy);
             chai.expect(eventSpy.preventDefault.calledOnce).to.equal(true);
@@ -832,200 +841,28 @@ templeApp.directive("fsModalTrigger", ['$rootScope', function ($rootScope) {
             chai.expect(colSpy.field).to.equal("gender");
             chai.expect(scope.showNameSortDropDown).to.equal(false);
 
-            });
+        }
+    );
 
-            //showUnqualifiedWarning
-            it ('should show warning', function () {
+    //showUnqualifiedWarning
+    it ('should show warning',
+        function () {
             chai.expect(scope.showUnqualifiedWarning({entity:{fullyAssignedToTemple:false, abilities:{unreserve:true}}})).to.equal(true);
 
-            });
+         }
+    );
 
-            //showFSIconTemple
-            it ('should show FSIconTemple', function () {
-            chai.expect(scope.showFSIconTemple({entity:{fullyAssignedToTemple:true, fullyPrinted:true}})).to.equal(true);
-
-            });
-
-            //showFSIconTempleInfo
-            it ('should FSIconTempleInfo warning', function () {
-            chai.expect(scope.showFSIconTempleInfo({entity:{fullyAssignedToTemple:false, fullyPrinted:true, abilities:{}}})).to.equal(true);
-
-            });
-
-            //sortChanged
-            it ('sortChanged should deselect all selected rows and reenable all rows', function() {
-            var deselectedIndexes = [];
-            scope.filteredCards = [{disabled:false}, {disabled:false}, {disabled:true} ];
-            scope.userSelections = [scope.filteredCards[0], scope.filteredCards[1]];
-            scope.gridOptions.selectRow = function (index, select) {
-            chai.expect(select).to.equal(false);
-            deselectedIndexes.push(index);
-            };
-            scope.sortChanged();
-            chai.expect(deselectedIndexes.length).to.equal(3);
-            chai.expect(scope.filteredCards[2].disabled).to.equal(false);
-
-            });
-
-            //toggleLegend
-            it ('should toggle the legend', function() {
-            chai.expect(scope.showLegendContent).to.equal(false);
-            scope.toggleLegend();
-            chai.expect(scope.showLegendContent).to.equal(true);
-            scope.toggleLegend();
-            chai.expect(scope.showLegendContent).to.equal(false);
-            });
-
-            //toggleOrdinanceDropdown
-            it ('should toggleOrdinanceDropdown', function() {
-            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(false);
-            scope.toggleDropDown("ordinanceFilterDropDown");
-            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(true);
-            scope.toggleDropDown("ordinanceFilterDropDown");
-            chai.expect(scope.showOrdinanceFilterDropDown).to.equal(false);
-            });
-
-            //toggleNameSortDropdown
-            it ('should toggleNameSortDropdown', function() {
-            chai.expect(scope.showNameSortDropDown).to.equal(false);
-            scope.toggleDropDown("nameSortDropDown");
-            chai.expect(scope.showNameSortDropDown).to.equal(true);
-            scope.toggleDropDown("nameSortDropDown");
-            chai.expect(scope.showNameSortDropDown).to.equal(false);
-            });
-
-            //updateButtonsState
-            it ('updateButtonsState should not show action buttons when no actions available', function () {
-            mockTempleCardService.getPageActions =
-            function (page){
-            return ({printableIds:[], shareableIds:[], unshareableIds:[], unreserveableIds:[]});
-            };
-
-            //initially buttons should not be set
-            chai.expect(scope.showPrintIndividualButton).to.equal(false);
-            chai.expect(scope.showPrintListButton).to.equal(false);
-            chai.expect(scope.showShareIndividualButton).to.equal(false);
-            chai.expect(scope.showShareListButton).to.equal(false);
-            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
-            chai.expect(scope.showUnshareListButton).to.equal(false);
-            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
-            chai.expect(scope.showUnreserveListButton).to.equal(false);
-
-            scope.updateButtonsState();
-
-            chai.expect(scope.showPrintIndividualButton).to.equal(false);
-            chai.expect(scope.showPrintListButton).to.equal(false);
-            chai.expect(scope.showShareIndividualButton).to.equal(false);
-            chai.expect(scope.showShareListButton).to.equal(false);
-            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
-            chai.expect(scope.showUnshareListButton).to.equal(false);
-            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
-            chai.expect(scope.showUnreserveListButton).to.equal(false);
-
-            });
-
-            it ('updateButtonsState should show individual Flow action buttons when 1 action available', function () {
-            mockTempleCardService.getPageActions = function() {
-            return ({printableIds:["id1"], shareableIds:["id1"], unshareableIds:["id1"], unreserveableIds:["id1"]});
-            };
-
-            //initially buttons should not be set
-            chai.expect(scope.showPrintIndividualButton).to.equal(false);
-            chai.expect(scope.showPrintListButton).to.equal(false);
-            chai.expect(scope.showShareIndividualButton).to.equal(false);
-            chai.expect(scope.showShareListButton).to.equal(false);
-            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
-            chai.expect(scope.showUnshareListButton).to.equal(false);
-            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
-            chai.expect(scope.showUnreserveListButton).to.equal(false);
-
-            scope.updateButtonsState();
-
-            chai.expect(scope.showPrintIndividualButton).to.equal(true);
-            chai.expect(scope.showPrintListButton).to.equal(false);
-            chai.expect(scope.showShareIndividualButton).to.equal(true);
-            chai.expect(scope.showShareListButton).to.equal(false);
-            chai.expect(scope.showUnshareIndividualButton).to.equal(true);
-            chai.expect(scope.showUnshareListButton).to.equal(false);
-            chai.expect(scope.showUnreserveIndividualButton).to.equal(true);
-            chai.expect(scope.showUnreserveListButton).to.equal(false);
-
-            });
-
-            it ('updateButtonsState should show aggregate Flow action buttons when more than 1 action available', function () {
-            mockTempleCardService.getPageActions = function() {
-            return ({printableIds:["id1", "id2"], shareableIds:["id1", "id2"], unshareableIds:["id1", "id2"], unreserveableIds:["id1", "id2"]});
-            };
-
-            //initially buttons should not be set
-            chai.expect(scope.showPrintIndividualButton).to.equal(false);
-            chai.expect(scope.showPrintListButton).to.equal(false);
-            chai.expect(scope.showShareIndividualButton).to.equal(false);
-            chai.expect(scope.showShareListButton).to.equal(false);
-            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
-            chai.expect(scope.showUnshareListButton).to.equal(false);
-            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
-            chai.expect(scope.showUnreserveListButton).to.equal(false);
-
-            scope.updateButtonsState();
-
-            chai.expect(scope.showPrintIndividualButton).to.equal(false);
-            chai.expect(scope.showPrintListButton).to.equal(true);
-            chai.expect(scope.showShareIndividualButton).to.equal(false);
-            chai.expect(scope.showShareListButton).to.equal(true);
-            chai.expect(scope.showUnshareIndividualButton).to.equal(false);
-            chai.expect(scope.showUnshareListButton).to.equal(true);
-            chai.expect(scope.showUnreserveIndividualButton).to.equal(false);
-            chai.expect(scope.showUnreserveListButton).to.equal(true);
-
-            });
-
-            //updateDisplayRows
-            it ('should updateDisplayRows replacing one row with zero rows', function () {
-            var mockResp = {
-            data:{rows:[], requestedIds:["id1"]}
-            };
-            scope.filterCards = [{id:"id1"}];
-            mockTempleCardService.updateCardsInList =  function (ids, cards){};
-            scope.updateDisplayRows(mockResp);
-            chai.expect(scope.filteredCards.length).to.be.equal(0);
-            });
-
-            it ('should replace one row with one row', function () {
-            var mockResp = {
-            data:{rows:[{id:"id1", name:"Updated Person1"}], requestedIds:["id1"]}
-
-            };
-            scope.person.cards = [{id:"id1", name:"Person1"}, {id:"id2", name:"Person2"}];
-            scope.updateDisplayRows(mockResp);
-            chai.expect(scope.cards.length).to.be.equal(2);
-            });
-
-            it ('should replace one row with two rows', function () {
-            var mockResp = {
-            data:{rows:[{id:"id1", name:"Updated Person1"}, {id:"id1", name:"Updated Person1"}], requestedIds:["id1"]}
-
-            };
-            scope.person.cards = [{id:"id1", name:"Person1"}];
-            mockTempleCardService.updateCardsInList =  function (ids, cards){ return cards.push({id:"id1", name:"Updated Person1"});};
-            scope.updateDisplayRows(mockResp);
-            chai.expect(scope.cards.length).to.be.equal(2);
-            });
-
-            });
-
-
-            });
 
             </code></pre>
         </section>
         <section>
-            <h1>Winnings</h1>
+            <h2>Improvements</h2>
             <ul>
                 <li>Better Performance</li>
                 <li>Sorting and Filtering</li>
-                <li>30%fewer lines of code</li>
-                <li>More maintainable Tesing</li>
+                <li>Roughly 70% code reduction</li>
+                <li>More maintainable</li>
+                <li>Easier More Focused Testing</li>
             </ul>
         </section>
 
@@ -1098,7 +935,7 @@ scope.$watch('person.nameConclusion.details.fullText', function(newVal, OldVal, 
                     </section>
                 </section>
 
-				<section>
+        <section>
 					<h1>Questions</h1>
                     <h4>Joel Thornton</h4>
                     <p><a href="mailto:thorntonjn@familysearch.org">thorntonjn@familysearch.org</a></p>
